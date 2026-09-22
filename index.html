@@ -1,0 +1,2059 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nitpad Pro</title>
+<style>
+:root,[data-theme="light"]{--bg:#eef1f5;--panel:#fff;--text:#1a1d21;--muted:#6b7280;--border:#e0e4ea;--accent:#4f46e5;--accent-soft:#eef2ff;--editor-bg:#fff;--code-bg:#f2f4f8;--shadow:0 2px 10px rgba(20,25,40,.07)}
+[data-theme="dark"]{--bg:#111317;--panel:#1a1d22;--text:#e7e9ee;--muted:#98a0ad;--border:#2a2f38;--accent:#8b8bff;--accent-soft:#232838;--editor-bg:#1a1d22;--code-bg:#22262e;--shadow:0 2px 14px rgba(0,0,0,.4)}
+[data-theme="sepia"]{--bg:#efe6d3;--panel:#fbf6ea;--text:#3d3428;--muted:#8a7b66;--border:#e0d4bb;--accent:#a0522d;--accent-soft:#f4ead4;--editor-bg:#fbf6ea;--code-bg:#f0e6d2}
+[data-theme="solarized"]{--bg:#eee8d5;--panel:#fdf6e3;--text:#586e75;--muted:#93a1a1;--border:#ddd6c1;--accent:#268bd2;--accent-soft:#e9e2cf;--editor-bg:#fdf6e3;--code-bg:#eee8d5}
+[data-theme="nord"]{--bg:#2e3440;--panel:#3b4252;--text:#eceff4;--muted:#9aa4b8;--border:#4c566a;--accent:#88c0d0;--accent-soft:#434c5e;--editor-bg:#2e3440;--code-bg:#3b4252}
+[data-theme="midnight"]{--bg:#0d1b2a;--panel:#1b263b;--text:#e0e1dd;--muted:#778da9;--border:#2a3a52;--accent:#5da9e9;--accent-soft:#20304a;--editor-bg:#1b263b;--code-bg:#22304a}
+[data-theme="forest"]{--bg:#1a2e22;--panel:#233d2e;--text:#e4efe6;--muted:#8ba895;--border:#345541;--accent:#7ecb8e;--accent-soft:#2c4a38;--editor-bg:#1a2e22;--code-bg:#233d2e}
+[data-theme="rose"]{--bg:#fce7ec;--panel:#fff5f7;--text:#4a2730;--muted:#a17a84;--border:#f2ccd4;--accent:#c2185b;--accent-soft:#fbd8e0;--editor-bg:#fff5f7;--code-bg:#f8dfe5}
+[data-theme="monokai"]{--bg:#1e1f1c;--panel:#272822;--text:#f8f8f2;--muted:#a6a28c;--border:#3b3d35;--accent:#a6e22e;--accent-soft:#33352c;--editor-bg:#272822;--code-bg:#2f312a}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;font-size:14px;transition:background .25s,color .25s}
+[hidden]{display:none!important}
+button,input,select{font-family:inherit;color:inherit}
+.app{display:grid;height:100vh;grid-template-areas:"tb tb" "sb mn" "st st";grid-template-columns:270px 1fr;grid-template-rows:auto 1fr auto;transition:grid-template-columns .2s}
+.app.no-sidebar{grid-template-columns:0 1fr}
+.app.no-sidebar .sidebar{display:none}
+.app.focus{grid-template-areas:"mn";grid-template-columns:1fr;grid-template-rows:1fr}
+.app.focus .toolbar,.app.focus .sidebar,.app.focus .statusbar{display:none}
+.toolbar{grid-area:tb;display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:thin}
+.brand{display:flex;align-items:center;gap:7px;font-weight:700;font-size:14px;padding-right:12px;margin-right:4px;border-right:1px solid var(--border);white-space:nowrap;flex-shrink:0}
+.brand sup{font-size:9px;color:var(--accent);font-weight:800}
+.tools{display:flex;align-items:center;gap:4px}
+.group{display:flex;align-items:center;gap:2px;padding:0 6px;border-right:1px solid var(--border);flex-shrink:0}
+.group:last-child{border-right:none}
+.tb{height:32px;min-width:32px;padding:0 8px;border:1px solid transparent;background:transparent;color:var(--text);border-radius:8px;cursor:pointer;font-size:14px;line-height:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap}
+.tb:hover{background:var(--accent-soft)}
+.tb.active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.tb.icon{font-size:15px}
+.tb.b{font-weight:800}.tb.i{font-style:italic;font-family:Georgia,serif}
+.tb.u{text-decoration:underline}.tb.s{text-decoration:line-through}
+select.tb{padding:0 6px;cursor:pointer;background:var(--panel);border:1px solid var(--border);height:30px;font-size:13px;max-width:150px}
+label.color{position:relative;overflow:hidden}
+label.color input[type=color]{position:absolute;inset:0;opacity:0;cursor:pointer;border:none;padding:0}
+label.color span{font-weight:700;border-bottom:3px solid var(--c,#000);line-height:1;padding-bottom:1px}
+.sidebar{grid-area:sb;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-head{padding:10px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--border)}
+.btn-primary{background:var(--accent);color:#fff;border:none;border-radius:8px;padding:9px 12px;font-weight:600;cursor:pointer;font-size:13px}
+.search{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);font-size:13px;outline:none}
+.doc-list{flex:1;overflow-y:auto;padding:6px}
+.doc-item{display:flex;align-items:center;gap:6px;padding:8px 9px;border-radius:9px;cursor:pointer;margin-bottom:2px;border:1px solid transparent}
+.doc-item:hover{background:var(--accent-soft)}
+.doc-item.active{background:var(--accent-soft);border-color:var(--accent)}
+.doc-item-main{flex:1;min-width:0}
+.doc-item-title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-item-sub{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-del{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:13px;opacity:0;padding:4px 6px;border-radius:6px}
+.doc-item:hover .doc-del{opacity:1}
+.doc-del:hover{background:#ff4d4f22;color:#ff4d4f}
+.empty{padding:20px;text-align:center;color:var(--muted);font-size:12px}
+.sidebar-foot{padding:8px 12px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);display:flex;justify-content:space-between}
+.main{grid-area:mn;display:flex;flex-direction:column;overflow:hidden;position:relative;min-width:0}
+.doc-head{display:flex;align-items:center;gap:10px;padding:8px 20px;background:var(--panel);border-bottom:1px solid var(--border)}
+.doc-title{flex:1;border:none;background:transparent;font-size:15px;font-weight:700;outline:none;padding:6px 0;min-width:0}
+.doc-meta{font-size:11px;color:var(--muted);white-space:nowrap}
+.file-badge{font-size:11px;padding:3px 10px;background:var(--accent-soft);color:var(--accent);border-radius:20px;font-weight:600;white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis;flex-shrink:0}
+.page-wrap{flex:1;overflow-y:auto;padding:26px 20px 80px}
+.page{max-width:830px;margin:0 auto;background:var(--editor-bg);border-radius:6px;padding:56px 68px;box-shadow:var(--shadow);min-height:calc(100% - 10px)}
+#editor{outline:none;font-size:16px;line-height:1.75;word-wrap:break-word;min-height:300px}
+#editor:empty::before{content:attr(data-placeholder);color:var(--muted);pointer-events:none}
+#editor h1{font-size:2em;margin:.5em 0 .4em;font-weight:800;line-height:1.25}
+#editor h2{font-size:1.55em;margin:.8em 0 .4em;font-weight:700}
+#editor h3{font-size:1.25em;margin:.8em 0 .3em;font-weight:700}
+#editor h4{font-size:1.08em;margin:.8em 0 .3em;font-weight:700}
+#editor p{margin:0 0 .85em}
+#editor ul,#editor ol{margin:0 0 .9em;padding-left:1.7em}
+#editor li{margin-bottom:.25em}
+#editor blockquote{border-left:4px solid var(--accent);margin:1em 0;padding:.6em 1.1em;background:var(--accent-soft);border-radius:0 8px 8px 0;color:var(--muted)}
+#editor pre{background:var(--code-bg);padding:14px 16px;border-radius:10px;overflow:auto;font-family:Consolas,"Courier New",monospace;font-size:.88em;line-height:1.55;margin:0 0 1em;border:1px solid var(--border)}
+#editor code{background:var(--code-bg);padding:2px 6px;border-radius:5px;font-family:Consolas,monospace;font-size:.88em}
+#editor pre code{background:none;padding:0;border:none}
+#editor img{max-width:100%;border-radius:8px;margin:6px 0}
+#editor a{color:var(--accent);text-decoration:underline}
+#editor hr{border:none;border-top:2px solid var(--border);margin:1.6em 0}
+#editor table{border-collapse:collapse;width:100%;margin:1em 0;font-size:.95em}
+#editor th,#editor td{border:1px solid var(--border);padding:8px 11px;text-align:left}
+#editor th{background:var(--accent-soft);font-weight:700}
+#editor mark{background:#ffe066;color:#000;border-radius:3px;padding:0 2px}
+.statusbar{grid-area:st;display:flex;align-items:center;gap:16px;padding:5px 16px;background:var(--panel);border-top:1px solid var(--border);font-size:11.5px;color:var(--muted)}
+.statusbar .spacer{flex:1}
+.statusbar b{color:var(--text);font-weight:600}
+.saved-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#22c55e;margin-right:5px}
+.saved-dot.dirty{background:#f59e0b}
+.zoom-ctrl{display:flex;align-items:center;gap:4px}
+.zoom-ctrl button{border:1px solid var(--border);background:transparent;border-radius:6px;width:22px;height:20px;cursor:pointer;font-size:13px;color:var(--text)}
+.zoom-ctrl button:hover{background:var(--accent-soft)}
+.findbar{position:absolute;top:10px;right:18px;z-index:40;background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:10px;display:flex;flex-direction:column;gap:8px;width:430px;max-width:calc(100% - 36px)}
+.findbar .row{display:flex;gap:6px;align-items:center}
+.findbar input[type=text]{flex:1;padding:7px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);outline:none;font-size:13px;min-width:0}
+.findbar button{border:1px solid var(--border);background:transparent;border-radius:8px;padding:7px 10px;cursor:pointer;font-size:12.5px;white-space:nowrap}
+.findbar .counter{font-size:11.5px;color:var(--muted);white-space:nowrap;min-width:46px;text-align:center}
+.findbar label{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:4px;white-space:nowrap;cursor:pointer}
+.focus-studio{position:fixed;top:0;right:0;bottom:0;width:320px;z-index:70;background:var(--panel);border-left:1px solid var(--border);box-shadow:-8px 0 30px rgba(0,0,0,.18);display:flex;flex-direction:column;overflow-y:auto}
+.fs-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--panel);z-index:2}
+.fs-head strong{font-size:14px}
+.fs-head button{border:none;background:transparent;font-size:16px;cursor:pointer;color:var(--muted);padding:4px 8px;border-radius:6px}
+.fs-section{padding:16px;border-bottom:1px solid var(--border)}
+.fs-label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.pomo-display{text-align:center;margin-bottom:12px}
+.pomo-time{font-size:48px;font-weight:800;font-variant-numeric:tabular-nums;font-family:Consolas,monospace;line-height:1;color:var(--text)}
+.pomo-time.break{color:#22c55e}
+.pomo-mode{font-size:12px;color:var(--muted);margin-top:6px}
+.pomo-btns{display:flex;gap:8px;margin-bottom:10px}
+.pomo-btns button{flex:1;padding:10px;border-radius:9px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:13px;font-weight:600}
+.pomo-btns #pomoStart{background:var(--accent);color:#fff;border-color:var(--accent)}
+.pomo-presets{display:flex;gap:6px;justify-content:center}
+.pomo-presets button{padding:5px 10px;font-size:11.5px;border-radius:20px;border:1px solid var(--border);background:transparent;cursor:pointer;color:var(--muted)}
+.pomo-presets button.active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.sound-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.sound-grid button{padding:11px 8px;border-radius:9px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:12.5px}
+.sound-grid button.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+.slider-row{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--muted)}
+.slider-row input[type=range]{flex:1;accent-color:var(--accent)}
+.slider-row .val{min-width:34px;text-align:right;font-variant-numeric:tabular-nums}
+.tts-btns{display:flex;gap:8px;margin-bottom:10px}
+.tts-btns button{flex:1;padding:10px;border-radius:9px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:13px;font-weight:600}
+.tts-btns button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.menu{position:fixed;z-index:60;background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);padding:6px;min-width:280px}
+.menu button{display:flex;align-items:center;gap:9px;width:100%;border:none;background:transparent;padding:9px 11px;border-radius:8px;cursor:pointer;font-size:13px;text-align:left;color:var(--text)}
+.menu button:hover{background:var(--accent-soft)}
+.menu button.active{background:var(--accent-soft);font-weight:600}
+.menu hr{border:none;border-top:1px solid var(--border);margin:5px 8px}
+.menu .swatch{width:22px;height:22px;border-radius:7px;flex-shrink:0;border:2px solid}
+.menu-label{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:6px 12px 4px}
+#toast{position:fixed;bottom:48px;left:50%;transform:translate(-50%,20px);z-index:100;background:#1f2430;color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;transition:.28s;box-shadow:0 6px 24px rgba(0,0,0,.3);max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+@media print{
+  html,body{background:#fff!important;color:#000!important;overflow:visible!important;height:auto!important}
+  .app{display:block!important;height:auto!important}
+  .toolbar,.sidebar,.statusbar,.doc-head,.findbar,.menu,#toast,.focus-studio,.file-badge{display:none!important}
+  .main{display:block!important;overflow:visible!important}
+  .page-wrap{overflow:visible!important;padding:0!important}
+  .page{box-shadow:none!important;padding:0!important;max-width:none!important;border-radius:0!important;background:#fff!important;min-height:0!important}
+  #editor{font-size:12pt!important;color:#000!important;background:#fff!important;line-height:1.6!important;min-height:0!important}
+  #editor:empty::before{content:""!important}
+  #editor blockquote{background:#eef2ff!important;color:#333!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #editor pre{background:#f2f2f2!important;border:1px solid #ddd!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #editor th{background:#eef2ff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #editor table,#editor img,#editor pre,#editor blockquote{page-break-inside:avoid}
+  @page{size:A4;margin:2cm}
+}
+@media (max-width:820px){
+  .app{grid-template-columns:0 1fr}
+  .app:not(.no-sidebar) .sidebar{position:fixed;top:0;bottom:0;left:0;width:280px;z-index:50;box-shadow:var(--shadow)}
+  .page{padding:28px 20px}
+  .page-wrap{padding:14px 8px 60px}
+  .findbar{width:calc(100% - 20px);right:10px}
+  .focus-studio{width:100%;max-width:340px}
+}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <header class="toolbar">
+    <div class="brand">⚡ <span>Nitpad<sup>PRO</sup></span></div>
+    <div class="tools">
+      <div class="group">
+        <button class="tb icon" id="sidebarToggle" title="Список документов">☰</button>
+        <button class="tb icon" data-cmd="undo" title="Отменить">↶</button>
+        <button class="tb icon" data-cmd="redo" title="Повторить">↷</button>
+      </div>
+      <div class="group">
+        <select class="tb" id="blockSelect">
+          <option value="p">Обычный текст</option>
+          <option value="h1">Заголовок 1</option>
+          <option value="h2">Заголовок 2</option>
+          <option value="h3">Заголовок 3</option>
+          <option value="h4">Заголовок 4</option>
+          <option value="blockquote">Цитата</option>
+          <option value="pre">Код</option>
+        </select>
+      </div>
+      <div class="group">
+        <select class="tb" id="fontFamily">
+          <option value="">Шрифт</option>
+          <option value="Arial, sans-serif">Arial</option>
+          <option value="'Times New Roman', serif">Times New Roman</option>
+          <option value="Georgia, serif">Georgia</option>
+          <option value="'Courier New', monospace">Courier New</option>
+          <option value="Consolas, monospace">Consolas</option>
+        </select>
+        <select class="tb" id="fontSize"><option value="">Размер</option></select>
+      </div>
+      <div class="group">
+        <button class="tb b" data-cmd="bold" title="Жирный">B</button>
+        <button class="tb i" data-cmd="italic" title="Курсив">I</button>
+        <button class="tb u" data-cmd="underline" title="Подчёркнутый">U</button>
+        <button class="tb s" data-cmd="strikeThrough" title="Зачёркнутый">S</button>
+        <button class="tb" data-cmd="superscript" title="Надстрочный">x²</button>
+        <button class="tb" data-cmd="subscript" title="Подстрочный">x₂</button>
+      </div>
+      <div class="group">
+        <label class="tb color" title="Цвет текста"><span style="--c:#e11d48">A</span><input type="color" id="foreColor" value="#e11d48"></label>
+        <label class="tb color" title="Цвет выделения"><span style="--c:#facc15">🖍</span><input type="color" id="hiliteColor" value="#facc15"></label>
+        <button class="tb icon" id="clearFormat" title="Очистить">🧹</button>
+      </div>
+      <div class="group">
+        <button class="tb" data-cmd="insertUnorderedList" title="Список •">•≡</button>
+        <button class="tb" data-cmd="insertOrderedList" title="Список 1.">1≡</button>
+        <button class="tb icon" data-cmd="outdent" title="Отступ ←">⇤</button>
+        <button class="tb icon" data-cmd="indent" title="Отступ →">⇥</button>
+      </div>
+      <div class="group">
+        <button class="tb icon" data-cmd="justifyLeft" title="Влево">⬅</button>
+        <button class="tb icon" data-cmd="justifyCenter" title="Центр">↔</button>
+        <button class="tb icon" data-cmd="justifyRight" title="Вправо">➡</button>
+        <button class="tb icon" data-cmd="justifyFull" title="По ширине">☰</button>
+      </div>
+      <div class="group">
+        <button class="tb icon" id="addLink" title="Ссылка">🔗</button>
+        <button class="tb icon" id="addImage" title="Изображение">🖼️</button>
+        <button class="tb icon" id="addTable" title="Таблица">▦</button>
+        <button class="tb icon" data-cmd="insertHorizontalRule" title="Линия">―</button>
+      </div>
+      <div class="group">
+        <button class="tb icon" id="focusStudioBtn" title="Focus Studio">🎧</button>
+        <button class="tb icon" id="findBtn" title="Поиск (Ctrl+F)">🔍</button>
+        <button class="tb icon" id="themeBtn" title="Тема">🎨</button>
+        <button class="tb icon" id="focusBtn" title="Фокус">⛶</button>
+      </div>
+      <div class="group">
+        <button class="tb" id="openFileBtn" title="Открыть (Ctrl+O)">📂 Открыть</button>
+        <button class="tb" id="saveFileBtn" title="Сохранить (Ctrl+S)">💾 Сохранить</button>
+        <button class="tb" id="exportBtn" title="Сохранить как / Экспорт">📤 Сохранить как ▾</button>
+        <button class="tb" id="printBtn" title="Печать / PDF (Ctrl+P)">🖨️ Печать</button>
+      </div>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <div class="sidebar-head">
+      <button class="btn-primary" id="newDocBtn">+ Новый документ</button>
+      <input class="search" id="docSearch" placeholder="Поиск по документам…">
+    </div>
+    <div class="doc-list" id="docList"></div>
+    <div class="sidebar-foot"><span id="docCount">0 документов</span><span id="storageSize">0 КБ</span></div>
+  </aside>
+
+  <main class="main" id="main">
+    <div class="doc-head">
+      <input class="doc-title" id="docTitle" placeholder="Название документа…">
+      <span class="file-badge" id="fileBadge" hidden></span>
+      <div class="doc-meta" id="docMeta"></div>
+    </div>
+    <div class="page-wrap" id="pageWrap">
+      <div class="page" id="page">
+        <div id="editor" contenteditable="true" spellcheck="true" data-placeholder="Начните печатать…"></div>
+      </div>
+    </div>
+    <div class="findbar" id="findBar" hidden>
+      <div class="row">
+        <input type="text" id="findInput" placeholder="Найти…">
+        <span class="counter" id="findCounter">0 / 0</span>
+        <button id="findPrev">↑</button>
+        <button id="findNext">↓</button>
+        <button id="findClose">✕</button>
+      </div>
+      <div class="row">
+        <input type="text" id="replaceInput" placeholder="Заменить на…">
+        <button id="replaceOne">Заменить</button>
+        <button id="replaceAll">Всё</button>
+        <label><input type="checkbox" id="caseSensitive"> Регистр</label>
+      </div>
+    </div>
+  </main>
+
+  <footer class="statusbar">
+    <span><span class="saved-dot" id="savedDot"></span><span id="savedText">Сохранено</span></span>
+    <span>Слов: <b id="statWords">0</b></span>
+    <span>Символов: <b id="statChars">0</b></span>
+    <span>Без пробелов: <b id="statCharsNoSpace">0</b></span>
+    <span>Абзацев: <b id="statParas">0</b></span>
+    <span>Чтение: <b id="statTime">0 мин</b></span>
+    <span class="spacer"></span>
+    <span class="zoom-ctrl">
+      <button id="zoomOut">−</button>
+      <span id="zoomLabel">100%</span>
+      <button id="zoomIn">+</button>
+    </span>
+  </footer>
+</div>
+
+<aside class="focus-studio" id="focusStudio" hidden>
+  <div class="fs-head"><strong>🎧 Focus Studio</strong><button id="fsClose">✕</button></div>
+  <div class="fs-section">
+    <div class="fs-label">⏱ Помодоро</div>
+    <div class="pomo-display"><div class="pomo-time" id="pomoTime">25:00</div><div class="pomo-mode" id="pomoMode">Время работать</div></div>
+    <div class="pomo-btns"><button id="pomoStart">▶ Старт</button><button id="pomoReset">↻ Сброс</button></div>
+    <div class="pomo-presets">
+      <button data-work="15" data-break="3">15 / 3</button>
+      <button data-work="25" data-break="5" class="active">25 / 5</button>
+      <button data-work="50" data-break="10">50 / 10</button>
+    </div>
+  </div>
+  <div class="fs-section">
+    <div class="fs-label">🌧 Фоновые звуки</div>
+    <div class="sound-grid" id="soundGrid">
+      <button data-sound="rain">🌧 Дождь</button>
+      <button data-sound="brown">🟤 Броун-шум</button>
+      <button data-sound="cafe">☕ Кафе</button>
+      <button data-sound="ocean">🌊 Океан</button>
+    </div>
+    <div class="slider-row"><span>Громкость</span><input type="range" id="soundVol" min="0" max="100" value="40"><span class="val" id="soundVolVal">40%</span></div>
+  </div>
+  <div class="fs-section">
+    <div class="fs-label">🔊 Чтение вслух</div>
+    <div class="tts-btns"><button id="ttsPlay">▶ Прочитать</button><button id="ttsStop">■ Стоп</button></div>
+    <div class="slider-row"><span>Скорость</span><input type="range" id="ttsRate" min="0.5" max="2" step="0.1" value="1"><span class="val" id="ttsRateVal">1.0×</span></div>
+  </div>
+</aside>
+
+<div id="toast"></div>
+<input type="file" id="fileInput" hidden accept=".txt,.md,.markdown,.html,.htm,.docx,.nppro,.json,.rtf,text/*">
+<input type="file" id="imageInput" hidden accept="image/*">
+
+<script>
+(function(){
+"use strict";
+
+var $ = function(s){ return document.querySelector(s); };
+var $$ = function(s){ return Array.prototype.slice.call(document.querySelectorAll(s)); };
+var uid = function(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); };
+var HAS_FS = typeof window.showSaveFilePicker === "function" && typeof window.showOpenFilePicker === "function";
+
+/* ============================================================
+   PYTHON BRIDGE — определеяется ДО DOMContentLoaded,
+   чтобы к моменту инициализации было известно, в каком
+   окружении мы работаем (браузер или pywebview .exe/.app).
+   ============================================================ */
+var HAS_PYWEBVIEW = false;
+
+// pywebview инжектит window.pywebview и генерирует событие
+window.addEventListener('pywebviewready', function(){
+  HAS_PYWEBVIEW = true;
+  console.log('[Nitpad Pro] Python bridge готов');
+});
+// Может быть уже готов к моменту загрузки скрипта
+if(typeof window.pywebview !== 'undefined' && window.pywebview.api){
+  HAS_PYWEBVIEW = true;
+}
+
+function escapeHTML(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+function escapeXml(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");
+}
+function stripTags(html){
+  var d = document.createElement("div"); d.innerHTML = html || ""; return d.textContent || "";
+}
+function countWords(t){ t = (t||"").trim(); return t ? t.split(/\s+/).filter(Boolean).length : 0; }
+function fmtDate(ts){
+  var d = new Date(ts);
+  return d.toLocaleDateString("ru-RU") + ", " + d.toLocaleTimeString("ru-RU",{hour:"2-digit",minute:"2-digit"});
+}
+
+var toastTimer;
+function toast(msg){
+  var t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2600);
+}
+
+/* ============ ТЕМЫ ============ */
+var THEMES = [
+  {id:"light",name:"Светлая",accent:"#4f46e5",bg:"#ffffff"},
+  {id:"dark",name:"Тёмная",accent:"#8b8bff",bg:"#111317"},
+  {id:"sepia",name:"Сепия",accent:"#a0522d",bg:"#fbf6ea"},
+  {id:"solarized",name:"Solarized",accent:"#268bd2",bg:"#fdf6e3"},
+  {id:"nord",name:"Nord",accent:"#88c0d0",bg:"#2e3440"},
+  {id:"midnight",name:"Полночь",accent:"#5da9e9",bg:"#0d1b2a"},
+  {id:"forest",name:"Лес",accent:"#7ecb8e",bg:"#1a2e22"},
+  {id:"rose",name:"Роза",accent:"#c2185b",bg:"#fce7ec"},
+  {id:"monokai",name:"Monokai",accent:"#a6e22e",bg:"#272822"}
+];
+var currentTheme = "light";
+function setTheme(id){
+  var found = false;
+  for(var i = 0; i < THEMES.length; i++){ if(THEMES[i].id === id){ found = true; break; } }
+  if(!found) id = "light";
+  currentTheme = id;
+  document.documentElement.setAttribute("data-theme", id);
+  try{ localStorage.setItem("nitpad.theme", id); }catch(e){}
+}
+
+/* ============ ХРАНИЛИЩЕ ============ */
+var STORAGE_DOCS = "nitpad.docs.v1";
+var STORAGE_ACTIVE = "nitpad.active.v1";
+
+function newDocObject(title, html){
+  return {id:uid(), title:title||"Без названия", html:html||"", created:Date.now(), updated:Date.now()};
+}
+
+var docs = [], activeId = null, saveTimer = null, savedRange = null, zoom = 100;
+var docFiles = new Map();
+var activeFileHandle = null, activeFileName = null, activeFileFormat = "html";
+
+function loadState(){
+  try{ docs = JSON.parse(localStorage.getItem(STORAGE_DOCS)) || []; }catch(e){ docs = []; }
+  if(!Array.isArray(docs) || !docs.length){
+    var welcome = "<h1>Nitpad Pro — твой умный блокнот 👋</h1>" +
+      "<p>Полноценный редактор. Всё <b>автосохраняется</b>.</p>" +
+      "<h2>✨ Возможности</h2>" +
+      "<ul>" +
+      "<li><b>🖨️ Печать</b> — кнопка в панели или Ctrl+P.</li>" +
+      "<li><b>📘 Word (.docx)</b> — настоящий файл (ZIP + OOXML).</li>" +
+      "<li><b>⚡ Nitpad Pro (.nppro)</b> — родной формат.</li>" +
+      "<li><b>🎨 9 тем</b> — светлая, тёмная, Nord, Monokai и другие.</li>" +
+      "<li><b>💾 Работа с файлами</b> — нативные диалоги ОС (Ctrl+O / Ctrl+S).</li>" +
+      "<li><b>🎧 Focus Studio</b> — помодоро, фоновые звуки, чтение вслух.</li>" +
+      "</ul>" +
+      "<blockquote>Это десктоп-версия. Все файловые операции идут через системные диалоги.</blockquote>";
+    docs = [newDocObject("Добро пожаловать в Nitpad Pro ⚡", welcome)];
+  }
+  activeId = localStorage.getItem(STORAGE_ACTIVE);
+  var exists = false;
+  for(var i = 0; i < docs.length; i++){ if(docs[i].id === activeId){ exists = true; break; } }
+  if(!exists) activeId = docs[0].id;
+}
+
+function persist(){
+  try{
+    localStorage.setItem(STORAGE_DOCS, JSON.stringify(docs));
+    localStorage.setItem(STORAGE_ACTIVE, activeId);
+    updateStorageInfo();
+    return true;
+  }catch(e){
+    setSavedState("dirty", "Ошибка сохранения");
+    toast("⚠️ Хранилище переполнено — сохраните в файл");
+    return false;
+  }
+}
+
+function updateStorageInfo(){
+  var bytes = new Blob([JSON.stringify(docs)]).size;
+  var size = bytes < 1024 ? bytes + " Б"
+           : bytes < 1048576 ? (bytes/1024).toFixed(1) + " КБ"
+           : (bytes/1048576).toFixed(2) + " МБ";
+  $("#storageSize").textContent = size;
+  var n = docs.length;
+  var word = (n%10===1 && n%100!==11) ? "документ"
+           : ([2,3,4].indexOf(n%10) !== -1 && [12,13,14].indexOf(n%100) === -1) ? "документа"
+           : "документов";
+  $("#docCount").textContent = n + " " + word;
+}
+
+/* ============ ДОКУМЕНТЫ ============ */
+var editor = $("#editor");
+var titleInput = $("#docTitle");
+var app = $("#app");
+function currentDoc(){
+  for(var i = 0; i < docs.length; i++){ if(docs[i].id === activeId) return docs[i]; }
+  return null;
+}
+function setSavedState(state, text){
+  var dot = $("#savedDot");
+  if(state !== "saved") dot.classList.add("dirty"); else dot.classList.remove("dirty");
+  $("#savedText").textContent = text || (state === "saved" ? "Сохранено" : "Изменено…");
+}
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  setSavedState("dirty","Изменено…");
+  saveTimer = setTimeout(saveNow, 450);
+}
+function saveNow(){
+  var d = currentDoc(); if(!d) return;
+  d.html = editor.innerHTML;
+  d.title = titleInput.value.trim() || "Без названия";
+  d.updated = Date.now();
+  if(persist()){ setSavedState("saved","Сохранено"); renderDocList(); renderDocMeta(); }
+}
+function updateFileBadge(){
+  var b = $("#fileBadge");
+  if(activeFileName){ b.hidden = false; b.textContent = "💾 " + activeFileName; b.title = "Файл: " + activeFileName; }
+  else b.hidden = true;
+}
+function openDoc(id){
+  saveNow();
+  var d = null;
+  for(var i = 0; i < docs.length; i++){ if(docs[i].id === id){ d = docs[i]; break; } }
+  if(!d) return;
+  activeId = id;
+  try{ localStorage.setItem(STORAGE_ACTIVE, id); }catch(e){}
+  titleInput.value = d.title === "Без названия" ? "" : d.title;
+  editor.innerHTML = d.html || "";
+  var fi = docFiles.get(id);
+  if(fi){ activeFileHandle = fi.handle; activeFileName = fi.name; activeFileFormat = fi.format; }
+  else{ activeFileHandle = null; activeFileName = null; activeFileFormat = "html"; }
+  updateFileBadge();
+  setSavedState("saved","Сохранено");
+  updateStats();
+  renderDocList();
+  renderDocMeta();
+  editor.focus();
+  $("#pageWrap").scrollTop = 0;
+}
+function createDoc(title, html){
+  saveNow();
+  var d = newDocObject(title||"Новый документ", html||"");
+  docs.unshift(d);
+  activeId = d.id;
+  persist();
+  titleInput.value = (d.title === "Новый документ") ? "" : d.title;
+  editor.innerHTML = d.html;
+  activeFileHandle = null; activeFileName = null; activeFileFormat = "html";
+  updateFileBadge();
+  updateStats(); renderDocList(); renderDocMeta();
+  titleInput.focus();
+  toast("Создан новый документ");
+}
+function deleteDoc(id){
+  var d = null;
+  for(var i = 0; i < docs.length; i++){ if(docs[i].id === id){ d = docs[i]; break; } }
+  if(!d) return;
+  if(!confirm("Удалить документ «" + d.title + "»?")) return;
+  docs = docs.filter(function(x){ return x.id !== id; });
+  if(!docs.length) docs.push(newDocObject("Без названия",""));
+  docFiles.delete(id);
+  if(activeId === id) activeId = docs[0].id;
+  persist();
+  openDoc(activeId);
+  toast("Документ удалён");
+}
+function renderDocList(){
+  var q = ($("#docSearch").value || "").toLowerCase().trim();
+  var list = $("#docList");
+  var items = docs
+    .filter(function(d){
+      return !q || d.title.toLowerCase().indexOf(q) !== -1 || stripTags(d.html).toLowerCase().indexOf(q) !== -1;
+    })
+    .sort(function(a,b){ return b.updated - a.updated; });
+  if(!items.length){ list.innerHTML = '<div class="empty">Ничего не найдено</div>'; return; }
+  var html = "";
+  items.forEach(function(d){
+    var linked = docFiles.get(d.id);
+    html += '<div class="doc-item ' + (d.id === activeId ? "active" : "") + '" data-id="' + d.id + '">' +
+      '<div class="doc-item-main">' +
+      '<div class="doc-item-title">' + escapeHTML(d.title || "Без названия") + (linked ? ' <span style="opacity:.6;font-size:10px">💾</span>' : "") + "</div>" +
+      '<div class="doc-item-sub">' + fmtDate(d.updated) + " · " + countWords(stripTags(d.html)) + " сл.</div>" +
+      "</div>" +
+      '<button class="doc-del" data-del="' + d.id + '">✕</button>' +
+      "</div>";
+  });
+  list.innerHTML = html;
+}
+function renderDocMeta(){
+  var d = currentDoc(); if(!d) return;
+  $("#docMeta").textContent = "Изменён: " + fmtDate(d.updated);
+}
+
+/* ============ СТАТИСТИКА ============ */
+function updateStats(){
+  var text = editor.innerText || "";
+  var words = countWords(text);
+  $("#statWords").textContent = words;
+  $("#statChars").textContent = text.length;
+  $("#statCharsNoSpace").textContent = text.replace(/\s/g,"").length;
+  $("#statParas").textContent = text.split(/\n+/).filter(function(p){ return p.trim(); }).length;
+  $("#statTime").textContent = (words === 0 ? 0 : Math.max(1, Math.ceil(words/200))) + " мин";
+}
+
+/* ============ КОМАНДЫ ============ */
+function rememberSelection(){
+  var sel = window.getSelection();
+  if(sel.rangeCount && editor.contains(sel.anchorNode)) savedRange = sel.getRangeAt(0).cloneRange();
+}
+document.addEventListener("selectionchange", function(){ rememberSelection(); updateToolbarState(); });
+function restoreSelection(){
+  if(!savedRange) return;
+  var sel = window.getSelection();
+  sel.removeAllRanges();
+  try{ sel.addRange(savedRange); }catch(e){}
+}
+function exec(cmd, value){
+  restoreSelection();
+  editor.focus();
+  var cssMode = (cmd === "foreColor" || cmd === "hiliteColor");
+  try{ document.execCommand("styleWithCSS", false, cssMode); }catch(e){}
+  document.execCommand(cmd, false, value === undefined ? null : value);
+  try{ document.execCommand("styleWithCSS", false, false); }catch(e){}
+  updateStats();
+  scheduleSave();
+  updateToolbarState();
+}
+function updateToolbarState(){
+  ["bold","italic","underline","strikeThrough","insertUnorderedList","insertOrderedList",
+   "justifyLeft","justifyCenter","justifyRight","justifyFull","superscript","subscript"]
+  .forEach(function(c){
+    var btn = document.querySelector('[data-cmd="' + c + '"]');
+    if(!btn) return;
+    var on = false;
+    try{ on = document.queryCommandState(c); }catch(e){}
+    if(on) btn.classList.add("active"); else btn.classList.remove("active");
+  });
+  var block = "p";
+  try{ block = (document.queryCommandValue("formatBlock") || "p").toLowerCase().replace(/[<>]/g,""); }catch(e){}
+  if(block === "div" || block === "") block = "p";
+  var sel = $("#blockSelect");
+  var hasOpt = false;
+  for(var i = 0; i < sel.options.length; i++){ if(sel.options[i].value === block){ hasOpt = true; break; } }
+  if(hasOpt) sel.value = block;
+}
+function initFontSizes(){
+  var sel = $("#fontSize");
+  [12,14,16,18,20,24,28,32,40,48,64].forEach(function(sz){
+    var o = document.createElement("option");
+    o.value = sz; o.textContent = sz + " px";
+    sel.appendChild(o);
+  });
+}
+function setFontSize(px){
+  restoreSelection();
+  editor.focus();
+  try{ document.execCommand("styleWithCSS", false, false); }catch(e){}
+  document.execCommand("fontSize", false, "7");
+  var fonts = editor.querySelectorAll('font[size="7"]');
+  Array.prototype.forEach.call(fonts, function(f){
+    var span = document.createElement("span");
+    span.style.fontSize = px + "px";
+    while(f.firstChild) span.appendChild(f.firstChild);
+    f.parentNode.replaceChild(span, f);
+  });
+  updateStats();
+  scheduleSave();
+}
+
+/* ============ ССЫЛКИ / ИЗОБРАЖЕНИЯ / ТАБЛИЦЫ ============ */
+function insertHTML(html){
+  restoreSelection();
+  editor.focus();
+  try{ document.execCommand("insertHTML", false, html); }
+  catch(e){
+    var sel = window.getSelection();
+    if(sel.rangeCount){
+      var r = sel.getRangeAt(0);
+      r.deleteContents();
+      var tmp = document.createElement("div");
+      tmp.innerHTML = html;
+      var frag = document.createDocumentFragment();
+      while(tmp.firstChild) frag.appendChild(tmp.firstChild);
+      r.insertNode(frag);
+      r.collapse(false);
+    }
+  }
+  updateStats();
+  scheduleSave();
+}
+function addLink(){
+  restoreSelection();
+  var sel = window.getSelection();
+  var hasText = sel && !sel.isCollapsed && editor.contains(sel.anchorNode);
+  var url = prompt("Адрес ссылки:", "https://");
+  if(!url) return;
+  if(hasText){ exec("createLink", url); }
+  else{
+    var t = prompt("Текст ссылки:", url) || url;
+    insertHTML('<a href="' + escapeHTML(url) + '" target="_blank">' + escapeHTML(t) + "</a>&nbsp;");
+  }
+}
+function insertImageFromFile(file){
+  if(!file || !file.type || file.type.indexOf("image/") !== 0) return;
+  if(file.size > 2.5 * 1024 * 1024){
+    if(!confirm("Изображение большое (" + (file.size/1024/1024).toFixed(1) + " МБ). Продолжить?")) return;
+  }
+  var r = new FileReader();
+  r.onload = function(e){
+    insertHTML('<img src="' + e.target.result + '" alt="' + escapeHTML(file.name) + '">');
+    toast("Изображение вставлено");
+  };
+  r.readAsDataURL(file);
+}
+function insertTable(){
+  var rows = parseInt(prompt("Строк:", "3"), 10);
+  var cols = parseInt(prompt("Столбцов:", "3"), 10);
+  if(!rows || !cols || rows < 1 || cols < 1 || rows > 50 || cols > 20) return;
+  var html = "<table><thead><tr>";
+  for(var c = 1; c <= cols; c++) html += "<th>Столбец " + c + "</th>";
+  html += "</tr></thead><tbody>";
+  for(var r = 2; r <= rows; r++){
+    html += "<tr>";
+    for(var c2 = 0; c2 < cols; c2++) html += "<td><br></td>";
+    html += "</tr>";
+  }
+  html += "</tbody></table><p><br></p>";
+  insertHTML(html);
+  toast("Таблица " + rows + "×" + cols);
+}
+
+/* ============ ОЧИСТКА HTML ============ */
+function sanitizeHTML(html){
+  var doc = new DOMParser().parseFromString(html, "text/html");
+  doc.querySelectorAll("style,script,meta,link,title,base,noscript").forEach(function(n){ n.remove(); });
+  Array.prototype.forEach.call(doc.body.querySelectorAll("*"), function(el){
+    if(el.tagName.indexOf(":") !== -1){ el.remove(); return; }
+    if(/^(html|head|body)$/i.test(el.tagName)) return;
+    el.removeAttribute("class");
+    el.removeAttribute("id");
+    el.removeAttribute("lang");
+    el.removeAttribute("dir");
+    Array.prototype.forEach.call(el.attributes, function(a){
+      if(/^on/i.test(a.name)) el.removeAttribute(a.name);
+    });
+    var st = el.getAttribute("style");
+    if(st){
+      var keep = st.split(";").map(function(s){ return s.trim(); })
+        .filter(function(s){ return /^(color|background-color|font-weight|font-style|text-decoration|text-align|font-size|font-family)\s*:/i.test(s); })
+        .filter(function(s){ return !/mso-/i.test(s); })
+        .join("; ");
+      if(keep) el.setAttribute("style", keep); else el.removeAttribute("style");
+    }
+  });
+  return doc.body.innerHTML;
+}
+
+/* ============ HTML ДОКУМЕНТ ============ */
+function fullHTMLDocument(){
+  var d = currentDoc();
+  var body = editor.innerHTML;
+  return '<!DOCTYPE html>\n<html lang="ru">\n<head>\n<meta charset="UTF-8">\n<title>' + escapeHTML(d ? d.title : "Документ") + '</title>\n' +
+    "<style>\n" +
+    'body{font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;max-width:820px;margin:40px auto;padding:0 20px;line-height:1.7;color:#1a1d21}\n' +
+    "h1,h2,h3{line-height:1.3}\n" +
+    "blockquote{border-left:4px solid #4f46e5;margin:1em 0;padding:.6em 1.1em;background:#eef2ff;border-radius:0 8px 8px 0;color:#555}\n" +
+    "pre{background:#f2f4f8;padding:14px 16px;border-radius:10px;overflow:auto}\n" +
+    "code{background:#f2f4f8;padding:2px 6px;border-radius:5px}\n" +
+    "pre code{background:none;padding:0}\n" +
+    "img{max-width:100%;border-radius:8px}\n" +
+    "table{border-collapse:collapse;width:100%;margin:1em 0}\n" +
+    "th,td{border:1px solid #ddd;padding:8px 11px;text-align:left}\n" +
+    "th{background:#eef2ff}\n" +
+    "a{color:#4f46e5}\n" +
+    "</style>\n</head>\n<body>\n" + body + "\n</body>\n</html>";
+}
+
+/* ============ MARKDOWN ============ */
+function htmlToMarkdown(html){
+  var root = document.createElement("div");
+  root.innerHTML = html;
+  function inline(node){
+    var out = "";
+    Array.prototype.forEach.call(node.childNodes, function(n){
+      if(n.nodeType === 3){ out += n.nodeValue.replace(/\s+/g," "); return; }
+      if(n.nodeType !== 1) return;
+      var tag = n.tagName.toLowerCase();
+      if(tag === "br"){ out += "  \n"; return; }
+      if(tag === "img"){ out += "![" + (n.alt||"") + "](" + (n.getAttribute("src")||"") + ")"; return; }
+      if(tag === "a"){ out += "[" + inline(n) + "](" + (n.getAttribute("href")||"") + ")"; return; }
+      var inner = inline(n);
+      if(tag === "strong" || tag === "b") out += "**" + inner + "**";
+      else if(tag === "em" || tag === "i") out += "*" + inner + "*";
+      else if(tag === "u") out += "<u>" + inner + "</u>";
+      else if(tag === "s" || tag === "strike" || tag === "del") out += "~~" + inner + "~~";
+      else if(tag === "code") out += "`" + inner + "`";
+      else if(tag === "mark") out += "==" + inner + "==";
+      else out += inner;
+    });
+    return out;
+  }
+  function listToMd(listEl, depth, ordered){
+    var out = "";
+    var items = Array.prototype.filter.call(listEl.children, function(li){ return li.tagName === "LI"; });
+    items.forEach(function(li, i){
+      var indent = "  ".repeat(depth);
+      var marker = ordered ? (i+1) + ". " : "- ";
+      var content = "", nested = "";
+      Array.prototype.forEach.call(li.childNodes, function(ch){
+        if(ch.nodeType === 1 && (ch.tagName === "UL" || ch.tagName === "OL")) nested += listToMd(ch, depth+1, ch.tagName === "OL");
+        else if(ch.nodeType === 3) content += ch.nodeValue;
+        else content += inline(ch);
+      });
+      out += indent + marker + content.trim() + "\n" + nested;
+    });
+    return out;
+  }
+  var md = "";
+  Array.prototype.forEach.call(root.childNodes, function(node){
+    if(node.nodeType === 3){
+      var t = node.nodeValue.replace(/\s+/g," ").trim();
+      if(t) md += t + "\n\n";
+      return;
+    }
+    if(node.nodeType !== 1) return;
+    var tag = node.tagName.toLowerCase();
+    if(tag === "ul" || tag === "ol"){ md += listToMd(node, 0, tag === "ol") + "\n"; return; }
+    var inner = inline(node);
+    if(tag === "h1") md += "# " + inner.trim() + "\n\n";
+    else if(tag === "h2") md += "## " + inner.trim() + "\n\n";
+    else if(tag === "h3") md += "### " + inner.trim() + "\n\n";
+    else if(tag === "h4") md += "#### " + inner.trim() + "\n\n";
+    else if(tag === "blockquote") md += inner.trim().split("\n").map(function(l){ return "> " + l; }).join("\n") + "\n\n";
+    else if(tag === "pre") md += "```\n" + (node.innerText || "").replace(/\n+$/,"") + "\n```\n\n";
+    else if(tag === "hr") md += "---\n\n";
+    else if(tag === "table"){
+      var rows = Array.prototype.slice.call(node.querySelectorAll("tr"));
+      rows.forEach(function(tr, ri){
+        var cells = Array.prototype.map.call(tr.children, function(td){
+          return (td.textContent||"").replace(/\s+/g," ").trim().replace(/\|/g,"\\|");
+        });
+        md += "| " + cells.join(" | ") + " |\n";
+        if(ri === 0) md += "| " + cells.map(function(){ return "---"; }).join(" | ") + " |\n";
+      });
+      md += "\n";
+    } else if(inner.trim()) md += inner.trim() + "\n\n";
+  });
+  return md.replace(/\n{3,}/g,"\n\n").trim() + "\n";
+}
+function markdownToHTML(md){
+  var lines = md.replace(/\r\n/g,"\n").split("\n");
+  var html = "", inCode = false, codeBuf = [], listType = null, listBuf = [];
+  function flushList(){
+    if(listType){
+      html += "<" + listType + ">" + listBuf.map(function(li){ return "<li>" + li + "</li>"; }).join("") + "</" + listType + ">";
+      listType = null; listBuf = [];
+    }
+  }
+  function inlineFmt(s){
+    return escapeHTML(s)
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/\*([^*]+)\*/g, "<em>$1</em>")
+      .replace(/~~([^~]+)~~/g, "<s>$1</s>")
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+  }
+  lines.forEach(function(line){
+    if(line.trim().indexOf("```") === 0){
+      if(inCode){
+        html += "<pre><code>" + escapeHTML(codeBuf.join("\n")) + "</code></pre>";
+        codeBuf = []; inCode = false;
+      } else { flushList(); inCode = true; }
+      return;
+    }
+    if(inCode){ codeBuf.push(line); return; }
+    var h = line.match(/^(#{1,6})\s+(.*)$/);
+    if(h){ flushList(); html += "<h" + h[1].length + ">" + inlineFmt(h[2]) + "</h" + h[1].length + ">"; return; }
+    if(/^>\s?/.test(line)){ flushList(); html += "<blockquote>" + inlineFmt(line.replace(/^>\s?/, "")) + "</blockquote>"; return; }
+    if(/^[-*+]\s+/.test(line)){
+      if(listType !== "ul"){ flushList(); listType = "ul"; }
+      listBuf.push(inlineFmt(line.replace(/^[-*+]\s+/, "")));
+      return;
+    }
+    if(/^\d+\.\s+/.test(line)){
+      if(listType !== "ol"){ flushList(); listType = "ol"; }
+      listBuf.push(inlineFmt(line.replace(/^\d+\.\s+/, "")));
+      return;
+    }
+    if(/^(---+|\*\*\*+|___+)\s*$/.test(line)){ flushList(); html += "<hr>"; return; }
+    if(!line.trim()){ flushList(); return; }
+    flushList();
+    html += "<p>" + inlineFmt(line) + "</p>";
+  });
+  flushList();
+  if(inCode && codeBuf.length) html += "<pre><code>" + escapeHTML(codeBuf.join("\n")) + "</code></pre>";
+  return html;
+}
+
+/* ============ ZIP CREATOR (для .docx) ============ */
+var CRC_TABLE = (function(){
+  var t = new Uint32Array(256);
+  for(var i = 0; i < 256; i++){
+    var c = i;
+    for(var j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    t[i] = c;
+  }
+  return t;
+})();
+function crc32(bytes){
+  var crc = 0xFFFFFFFF;
+  for(var i = 0; i < bytes.length; i++) crc = CRC_TABLE[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+function createZip(files){
+  var enc = new TextEncoder();
+  var chunks = [];
+  var central = [];
+  var offset = 0;
+  function writeU16(arr, off, val){ arr[off] = val & 0xFF; arr[off+1] = (val >>> 8) & 0xFF; }
+  function writeU32(arr, off, val){
+    arr[off] = val & 0xFF; arr[off+1] = (val >>> 8) & 0xFF;
+    arr[off+2] = (val >>> 16) & 0xFF; arr[off+3] = (val >>> 24) & 0xFF;
+  }
+  files.forEach(function(f){
+    var nameBytes = enc.encode(f.name);
+    var dataBytes = (typeof f.data === "string") ? enc.encode(f.data) : f.data;
+    var crc = crc32(dataBytes);
+    var localOffset = offset;
+    var lh = new Uint8Array(30 + nameBytes.length);
+    writeU32(lh, 0, 0x04034b50); writeU16(lh, 4, 20); writeU16(lh, 6, 0x0800);
+    writeU16(lh, 8, 0); writeU16(lh, 10, 0); writeU16(lh, 12, 0x21);
+    writeU32(lh, 14, crc); writeU32(lh, 18, dataBytes.length); writeU32(lh, 22, dataBytes.length);
+    writeU16(lh, 26, nameBytes.length); writeU16(lh, 28, 0);
+    for(var i = 0; i < nameBytes.length; i++) lh[30 + i] = nameBytes[i];
+    chunks.push(lh); chunks.push(dataBytes);
+    offset += lh.length + dataBytes.length;
+    var cd = new Uint8Array(46 + nameBytes.length);
+    writeU32(cd, 0, 0x02014b50); writeU16(cd, 4, 20); writeU16(cd, 6, 20);
+    writeU16(cd, 8, 0x0800); writeU16(cd, 10, 0); writeU16(cd, 12, 0);
+    writeU16(cd, 14, 0x21); writeU32(cd, 16, crc);
+    writeU32(cd, 20, dataBytes.length); writeU32(cd, 24, dataBytes.length);
+    writeU16(cd, 28, nameBytes.length);
+    writeU16(cd, 30, 0); writeU16(cd, 32, 0); writeU16(cd, 34, 0); writeU16(cd, 36, 0);
+    writeU32(cd, 38, 0); writeU32(cd, 42, localOffset);
+    for(var j = 0; j < nameBytes.length; j++) cd[46 + j] = nameBytes[j];
+    central.push(cd);
+  });
+  var cdOffset = offset;
+  var cdSize = 0;
+  central.forEach(function(c){ chunks.push(c); cdSize += c.length; });
+  var eocd = new Uint8Array(22);
+  writeU32(eocd, 0, 0x06054b50); writeU16(eocd, 4, 0); writeU16(eocd, 6, 0);
+  writeU16(eocd, 8, files.length); writeU16(eocd, 10, files.length);
+  writeU32(eocd, 12, cdSize); writeU32(eocd, 16, cdOffset); writeU16(eocd, 20, 0);
+  chunks.push(eocd);
+  var total = 0;
+  chunks.forEach(function(c){ total += c.length; });
+  var out = new Uint8Array(total);
+  var o = 0;
+  chunks.forEach(function(c){ out.set(c, o); o += c.length; });
+  return out;
+}
+
+/* ============ DOCX GENERATOR ============ */
+function htmlToWordParagraphs(html){
+  var root = document.createElement("div");
+  root.innerHTML = html;
+  var paras = [];
+  function runsFrom(node, fmt){
+    fmt = fmt || {};
+    var runs = [];
+    Array.prototype.forEach.call(node.childNodes, function(child){
+      if(child.nodeType === 3){
+        var text = child.nodeValue;
+        if(!text) return;
+        var rpr = "";
+        if(fmt.b) rpr += "<w:b/>";
+        if(fmt.i) rpr += "<w:i/>";
+        if(fmt.u) rpr += '<w:u w:val="single"/>';
+        if(fmt.s) rpr += "<w:strike/>";
+        if(fmt.mono) rpr += '<w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/>';
+        if(fmt.sizeHalf) rpr += '<w:sz w:val="' + fmt.sizeHalf + '"/><w:szCs w:val="' + fmt.sizeHalf + '"/>';
+        if(fmt.color) rpr += '<w:color w:val="' + fmt.color.replace("#","") + '"/>';
+        var rprBlock = rpr ? "<w:rPr>" + rpr + "</w:rPr>" : "";
+        runs.push("<w:r>" + rprBlock + '<w:t xml:space="preserve">' + escapeXml(text) + "</w:t></w:r>");
+      } else if(child.nodeType === 1){
+        var tag = child.tagName.toLowerCase();
+        if(tag === "br"){ runs.push("<w:r><w:br/></w:r>"); return; }
+        var nf = {};
+        for(var k in fmt){ if(fmt.hasOwnProperty(k)) nf[k] = fmt[k]; }
+        if(tag === "b" || tag === "strong") nf.b = true;
+        if(tag === "i" || tag === "em") nf.i = true;
+        if(tag === "u") nf.u = true;
+        if(tag === "s" || tag === "strike" || tag === "del") nf.s = true;
+        if(tag === "code" || tag === "pre") nf.mono = true;
+        var st = child.getAttribute("style") || "";
+        var cm = st.match(/color\s*:\s*(#[0-9a-fA-F]{3,6})/);
+        if(cm) nf.color = cm[1];
+        runs = runs.concat(runsFrom(child, nf));
+      }
+    });
+    return runs;
+  }
+  function processBlock(el, level){
+    level = level || 0;
+    var tag = el.tagName.toLowerCase();
+    if(tag === "ul" || tag === "ol"){
+      Array.prototype.forEach.call(el.children, function(li, i){
+        var marker = tag === "ol" ? (i+1) + ". " : "• ";
+        var runs = runsFrom(li);
+        paras.push('<w:p><w:pPr><w:ind w:left="' + (720 + level*360) + '"/></w:pPr>' +
+          '<w:r><w:t xml:space="preserve">' + marker + "</w:t></w:r>" + runs.join("") + "</w:p>");
+        Array.prototype.forEach.call(li.children, function(ch){
+          if(ch.tagName === "UL" || ch.tagName === "OL") processBlock(ch, level+1);
+        });
+      });
+      return;
+    }
+    if(/^h[1-6]$/.test(tag)){
+      var lvl = parseInt(tag.charAt(1), 10);
+      var sizes = [44,36,30,26,24,22];
+      var sizeHalf = sizes[lvl-1];
+      var runs = runsFrom(el, {b:true, sizeHalf:sizeHalf});
+      paras.push('<w:p><w:pPr><w:spacing w:before="280" w:after="140"/></w:pPr>' + runs.join("") + "</w:p>");
+      return;
+    }
+    if(tag === "blockquote"){
+      var runs2 = runsFrom(el, {i:true});
+      paras.push('<w:p><w:pPr><w:ind w:left="720"/>' +
+        '<w:pBdr><w:left w:val="single" w:sz="18" w:color="4F46E5" w:space="12"/></w:pBdr>' +
+        '<w:shd w:val="clear" w:fill="EEF2FF"/></w:pPr>' + runs2.join("") + "</w:p>");
+      return;
+    }
+    if(tag === "pre"){
+      var text = el.textContent || "";
+      text.split("\n").forEach(function(line){
+        paras.push('<w:p><w:pPr><w:shd w:val="clear" w:fill="F2F4F8"/><w:spacing w:after="0"/></w:pPr>' +
+          '<w:r><w:rPr><w:rFonts w:ascii="Consolas" w:hAnsi="Consolas"/><w:sz w:val="20"/></w:rPr>' +
+          '<w:t xml:space="preserve">' + escapeXml(line || " ") + "</w:t></w:r></w:p>");
+      });
+      return;
+    }
+    if(tag === "hr"){
+      paras.push('<w:p><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="6" w:color="999999" w:space="1"/></w:pBdr></w:pPr></w:p>');
+      return;
+    }
+    if(tag === "table"){
+      var rows = Array.prototype.slice.call(el.querySelectorAll("tr"));
+      var tbl = '<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblBorders>';
+      ["top","left","bottom","right","insideH","insideV"].forEach(function(s){
+        tbl += "<w:" + s + ' w:val="single" w:sz="6" w:color="CCCCCC"/>';
+      });
+      tbl += "</w:tblBorders></w:tblPr>";
+      rows.forEach(function(tr){
+        tbl += "<w:tr>";
+        Array.prototype.forEach.call(tr.children, function(td){
+          var isHeader = td.tagName === "TH";
+          var runs = runsFrom(td, isHeader ? {b:true} : {});
+          tbl += '<w:tc><w:tcPr><w:tcW w:w="0" w:type="auto"/></w:tcPr><w:p>' + runs.join("") + "</w:p></w:tc>";
+        });
+        tbl += "</w:tr>";
+      });
+      tbl += "</w:tbl><w:p/>";
+      paras.push(tbl);
+      return;
+    }
+    var runs3 = runsFrom(el);
+    if(runs3.length) paras.push("<w:p>" + runs3.join("") + "</w:p>");
+  }
+  Array.prototype.forEach.call(root.childNodes, function(node){
+    if(node.nodeType === 3){
+      var text = node.nodeValue.trim();
+      if(text) paras.push('<w:p><w:r><w:t xml:space="preserve">' + escapeXml(text) + "</w:t></w:r></w:p>");
+    } else if(node.nodeType === 1){
+      processBlock(node, 0);
+    }
+  });
+  if(!paras.length) paras.push("<w:p/>");
+  return paras.join("\n");
+}
+function generateDocx(){
+  var d = currentDoc();
+  var title = d ? d.title : "Документ";
+  var body = htmlToWordParagraphs(editor.innerHTML);
+  var contentTypes = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+    '<Default Extension="xml" ContentType="application/xml"/>' +
+    '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+    '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>' +
+    "</Types>";
+  var rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+    '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>' +
+    "</Relationships>";
+  var now = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+  var core = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" ' +
+    'xmlns:dc="http://purl.org/dc/elements/1.1/" ' +
+    'xmlns:dcterms="http://purl.org/dc/terms/" ' +
+    'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' +
+    "<dc:title>" + escapeXml(title) + "</dc:title>" +
+    "<dc:creator>Nitpad Pro</dc:creator>" +
+    "<cp:lastModifiedBy>Nitpad Pro</cp:lastModifiedBy>" +
+    '<dcterms:created xsi:type="dcterms:W3CDTF">' + now + "</dcterms:created>" +
+    '<dcterms:modified xsi:type="dcterms:W3CDTF">' + now + "</dcterms:modified>" +
+    "</cp:coreProperties>";
+  var document = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' +
+    '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">' +
+    "<w:body>" + body +
+    "<w:sectPr>" +
+    '<w:pgSz w:w="11906" w:h="16838"/>' +
+    '<w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="708" w:footer="708" w:gutter="0"/>' +
+    "</w:sectPr>" +
+    "</w:body>" +
+    "</w:document>";
+  return createZip([
+    {name:"[Content_Types].xml", data:contentTypes},
+    {name:"_rels/.rels", data:rels},
+    {name:"docProps/core.xml", data:core},
+    {name:"word/document.xml", data:document}
+  ]);
+}
+
+/* ============ NPPRO ============ */
+function generateNppro(){
+  var d = currentDoc();
+  var payload = {
+    format: "Nitpad Pro Document",
+    formatVersion: 1,
+    magic: "NITPADPRO",
+    created: new Date(d.created).toISOString(),
+    modified: new Date().toISOString(),
+    title: d.title,
+    theme: currentTheme,
+    zoom: zoom,
+    html: editor.innerHTML,
+    text: editor.innerText
+  };
+  return "NITPADPRO\n" + JSON.stringify(payload, null, 2);
+}
+function parseNppro(text){
+  if(text.indexOf("NITPADPRO\n") === 0){
+    try{ return JSON.parse(text.slice(10)); }catch(e){ return null; }
+  }
+  try{
+    var o = JSON.parse(text);
+    if(o.magic === "NITPADPRO" || o.format === "Nitpad Pro Document") return o;
+  }catch(e){}
+  return null;
+}
+
+/* ============ DOWNLOAD (браузерный fallback) ============ */
+function download(filename, content, mime){
+  var blob = new Blob([content], {type:mime});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+}
+function safeFileName(){
+  var d = currentDoc();
+  return ((d ? d.title : "документ").replace(/[\\\/:*?"<>|]+/g,"_").slice(0,60) || "документ");
+}
+function formatFromFilename(name){
+  var ext = (name.split(".").pop() || "").toLowerCase();
+  if(ext === "md" || ext === "markdown") return "md";
+  if(ext === "txt") return "txt";
+  if(ext === "json") return "json";
+  if(ext === "nppro") return "nppro";
+  if(ext === "docx" || ext === "doc") return "docx";
+  return "html";
+}
+function getContentForFormat(fmt){
+  if(fmt === "txt")   return {content:editor.innerText, mime:"text/plain;charset=utf-8", ext:"txt"};
+  if(fmt === "md")    return {content:htmlToMarkdown(editor.innerHTML), mime:"text/markdown;charset=utf-8", ext:"md"};
+  if(fmt === "json")  return {content:JSON.stringify({exported:new Date().toISOString(), documents:docs}, null, 2), mime:"application/json", ext:"json"};
+  if(fmt === "docx")  return {content:generateDocx(), mime:"application/vnd.openxmlformats-officedocument.wordprocessingml.document", ext:"docx"};
+  if(fmt === "nppro") return {content:generateNppro(), mime:"application/x-nitpad-pro", ext:"nppro"};
+  return {content:fullHTMLDocument(), mime:"text/html;charset=utf-8", ext:"html"};
+}
+
+/* ============ ПЕЧАТЬ ============ */
+function doPrint(){
+  saveNow();
+  if(document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  setTimeout(function(){ window.print(); }, 100);
+}
+
+/* ============ СОХРАНЕНИЕ ЧЕРЕЗ PYTHON (нативный диалог) ============ */
+function saveToFileNative(forceDialog){
+  saveNow();
+  var d = currentDoc(); if(!d) return;
+  var fmt = activeFileFormat || "html";
+  var info = getContentForFormat(fmt);
+  var suggested = activeFileName || (safeFileName() + "." + info.ext);
+  var payload = info.content;
+
+  // Uint8Array (.docx) — кодируем в base64
+  if(payload instanceof Uint8Array){
+    var bin = "";
+    var CHUNK = 0x8000;
+    for(var i = 0; i < payload.length; i += CHUNK){
+      var slice = payload.subarray(i, i + CHUNK);
+      bin += String.fromCharCode.apply(null, slice);
+    }
+    payload = "__BASE64__:" + btoa(bin);
+  }
+
+  window.pywebview.api.save_file(payload, suggested).then(function(res){
+    if(!res) return;
+    if(res.status === "ok"){
+      activeFileName = res.name;
+      activeFileFormat = formatFromFilename(res.name);
+      docFiles.set(d.id, {handle:null, name:res.name, format:activeFileFormat});
+      updateFileBadge();
+      renderDocList();
+      setSavedState("saved", "Сохранено в " + res.name);
+      toast("💾 Сохранено: " + res.name);
+    } else if(res.status === "error"){
+      toast("Ошибка: " + res.message);
+    }
+  }).catch(function(err){
+    toast("Ошибка моста: " + err);
+  });
+}
+
+/* ============ СОХРАНЕНИЕ (универсальная функция) ============ */
+function saveToFile(forceDialog){
+  if(HAS_PYWEBVIEW && window.pywebview && window.pywebview.api){
+    return saveToFileNative(forceDialog);
+  }
+  saveNow();
+  var d = currentDoc(); if(!d) return;
+
+  if(!HAS_FS){
+    var fmt = activeFileFormat || "html";
+    var info = getContentForFormat(fmt);
+    var fname = (activeFileName ? activeFileName.replace(/\.[^.]+$/, "") : safeFileName()) + "." + info.ext;
+    download(fname, info.content, info.mime);
+    toast("Файл скачан: " + fname);
+    return;
+  }
+
+  var types = [
+    {description:"Nitpad Pro (.nppro)", accept:{"application/x-nitpad-pro":[".nppro"]}},
+    {description:"Word (.docx)", accept:{"application/vnd.openxmlformats-officedocument.wordprocessingml.document":[".docx"]}},
+    {description:"HTML", accept:{"text/html":[".html",".htm"]}},
+    {description:"Markdown", accept:{"text/markdown":[".md"]}},
+    {description:"Текст", accept:{"text/plain":[".txt"]}}
+  ];
+  var suggested = activeFileName || (safeFileName() + ".html");
+
+  (async function(){
+    try{
+      var handle = activeFileHandle;
+      if(!handle || forceDialog){
+        handle = await window.showSaveFilePicker({suggestedName:suggested, types:types});
+      }
+      var fname = handle.name;
+      var fmt = formatFromFilename(fname);
+      var info = getContentForFormat(fmt);
+      var writable = await handle.createWritable();
+      await writable.write(info.content);
+      await writable.close();
+      activeFileHandle = handle;
+      activeFileName = fname;
+      activeFileFormat = fmt;
+      docFiles.set(d.id, {handle:handle, name:fname, format:fmt});
+      updateFileBadge(); renderDocList();
+      setSavedState("saved", "Сохранено в " + fname);
+      toast("💾 Сохранено: " + fname);
+    }catch(e){
+      if(e.name === "AbortError") return;
+      console.error(e);
+      toast("Ошибка: " + (e.message || e.name));
+    }
+  })();
+}
+
+/* ============ ОТКРЫТИЕ ЧЕРЕЗ PYTHON (нативный диалог) ============ */
+function openFileNative(){
+  window.pywebview.api.open_file().then(function(res){
+    if(!res) return;
+    if(res.status === "cancelled") return;
+    if(res.status === "error"){ toast("Ошибка: " + res.message); return; }
+    loadNativeFile(res);
+  }).catch(function(err){
+    toast("Ошибка моста: " + err);
+  });
+}
+
+function loadNativeFile(res){
+  var ext = (res.name.split(".").pop() || "").toLowerCase();
+  var text = res.content || "";
+
+  if(ext === "nppro"){
+    var data = parseNppro(text);
+    if(!data){ toast("Неверный .nppro"); return; }
+    saveNow();
+    var d = newDocObject(data.title || res.name.replace(/\.[^.]+$/, ""), data.html || "");
+    docs.unshift(d); activeId = d.id; persist();
+    activeFileName = res.name;
+    activeFileFormat = "nppro";
+    docFiles.set(d.id, {handle:null, name:res.name, format:"nppro"});
+    titleInput.value = d.title;
+    editor.innerHTML = d.html;
+    if(data.theme) setTheme(data.theme);
+    updateFileBadge(); setSavedState("saved","Открыт файл");
+    updateStats(); renderDocList(); renderDocMeta();
+    toast("⚡ Открыт: " + res.name);
+    return;
+  }
+
+  if(ext === "json"){
+    try{
+      var j = JSON.parse(text);
+      if(j && Array.isArray(j.documents) && j.documents.length){
+        if(!confirm("Резервная копия с " + j.documents.length + " документами. Заменить текущие?")) return;
+        docs = j.documents; activeId = docs[0].id;
+        persist(); openDoc(activeId);
+        toast("Резервная копия восстановлена");
+        return;
+      }
+    }catch(e){}
+  }
+
+  var html;
+  if(ext === "html" || ext === "htm"){
+    html = sanitizeHTML(text) || ("<p>" + escapeHTML(text).replace(/\n/g,"<br>") + "</p>");
+  } else if(ext === "md" || ext === "markdown"){
+    html = markdownToHTML(text);
+  } else {
+    html = text.split(/\n{2,}/).map(function(p){
+      return "<p>" + escapeHTML(p).replace(/\n/g,"<br>") + "</p>";
+    }).join("");
+  }
+  saveNow();
+  var baseName = res.name.replace(/\.[^.]+$/, "");
+  var doc = newDocObject(baseName, html);
+  docs.unshift(doc); activeId = doc.id; persist();
+  activeFileName = res.name;
+  activeFileFormat = formatFromFilename(res.name);
+  docFiles.set(doc.id, {handle:null, name:res.name, format:activeFileFormat});
+  titleInput.value = baseName;
+  editor.innerHTML = html;
+  updateFileBadge(); setSavedState("saved","Открыт файл");
+  updateStats(); renderDocList(); renderDocMeta();
+  toast("📂 Открыт: " + res.name);
+}
+
+/* ============ ОТКРЫТИЕ ФАЙЛА (универсальная функция) ============ */
+function openFileFromDisk(){
+  if(HAS_PYWEBVIEW && window.pywebview && window.pywebview.api){
+    return openFileNative();
+  }
+  if(!HAS_FS){ $("#fileInput").click(); return; }
+
+  var types = [
+    {description:"Все поддерживаемые", accept:{
+      "application/x-nitpad-pro":[".nppro"],
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document":[".docx"],
+      "text/html":[".html",".htm"],
+      "text/markdown":[".md",".markdown"],
+      "text/plain":[".txt"],
+      "application/json":[".json"]
+    }},
+    {description:"Все файлы", accept:{"*/*":[".*"]}}
+  ];
+
+  (async function(){
+    try{
+      var handles = await window.showOpenFilePicker({multiple:false, types:types});
+      await loadFromHandle(handles[0]);
+    }catch(e){
+      if(e.name === "AbortError") return;
+      console.error(e);
+      toast("Ошибка: " + (e.message || e.name));
+    }
+  })();
+}
+
+function loadFromHandle(handle){
+  (async function(){
+    try{
+      var file = await handle.getFile();
+      var text = await file.text();
+      var ext = (file.name.split(".").pop() || "").toLowerCase();
+
+      if(ext === "nppro"){
+        var data = parseNppro(text);
+        if(!data){ toast("Неверный формат .nppro"); return; }
+        saveNow();
+        var d = newDocObject(data.title || file.name.replace(/\.[^.]+$/, ""), data.html || "");
+        docs.unshift(d); activeId = d.id; persist();
+        activeFileHandle = handle;
+        activeFileName = file.name;
+        activeFileFormat = "nppro";
+        docFiles.set(d.id, {handle:handle, name:file.name, format:"nppro"});
+        titleInput.value = d.title;
+        editor.innerHTML = d.html;
+        if(data.theme) setTheme(data.theme);
+        updateFileBadge(); setSavedState("saved","Открыт файл");
+        updateStats(); renderDocList(); renderDocMeta();
+        toast("⚡ Открыт: " + file.name);
+        return;
+      }
+
+      if(ext === "json"){
+        try{
+          var j = JSON.parse(text);
+          if(j && Array.isArray(j.documents) && j.documents.length){
+            if(!confirm("Резервная копия с " + j.documents.length + " документами. Заменить текущие?")) return;
+            docs = j.documents; activeId = docs[0].id;
+            persist(); openDoc(activeId);
+            toast("Резервная копия восстановлена");
+            return;
+          }
+        }catch(e){}
+      }
+
+      if(ext === "docx"){
+        toast("Формат .docx — только для экспорта");
+        return;
+      }
+
+      var html;
+      if(ext === "html" || ext === "htm"){
+        html = sanitizeHTML(text) || ("<p>" + escapeHTML(text).replace(/\n/g,"<br>") + "</p>");
+      } else if(ext === "md" || ext === "markdown"){
+        html = markdownToHTML(text);
+      } else {
+        html = text.split(/\n{2,}/).map(function(p){ return "<p>" + escapeHTML(p).replace(/\n/g,"<br>") + "</p>"; }).join("");
+      }
+
+      saveNow();
+      var baseName = file.name.replace(/\.[^.]+$/, "");
+      var doc = newDocObject(baseName, html);
+      docs.unshift(doc); activeId = doc.id; persist();
+      activeFileHandle = handle;
+      activeFileName = file.name;
+      activeFileFormat = formatFromFilename(file.name);
+      docFiles.set(doc.id, {handle:handle, name:file.name, format:activeFileFormat});
+      titleInput.value = baseName;
+      editor.innerHTML = html;
+      updateFileBadge(); setSavedState("saved","Открыт файл");
+      updateStats(); renderDocList(); renderDocMeta();
+      toast("📂 Открыт: " + file.name);
+    }catch(e){
+      console.error(e);
+      toast("Ошибка чтения файла: " + e.message);
+    }
+  })();
+}
+
+/* ============ ИМПОРТ (fallback <input type=file>) ============ */
+function importFile(file){
+  var r = new FileReader();
+  var ext = (file.name.split(".").pop() || "").toLowerCase();
+  r.onload = function(e){
+    var content = e.target.result;
+    if(ext === "nppro"){
+      var data = parseNppro(content);
+      if(!data){ toast("Неверный .nppro"); return; }
+      saveNow();
+      var doc = newDocObject(data.title || file.name.replace(/\.[^.]+$/, ""), data.html || "");
+      docs.unshift(doc); activeId = doc.id; persist();
+      titleInput.value = doc.title;
+      editor.innerHTML = doc.html;
+      if(data.theme) setTheme(data.theme);
+      activeFileName = file.name;
+      activeFileFormat = "nppro";
+      docFiles.set(doc.id, {handle:null, name:file.name, format:"nppro"});
+      updateFileBadge(); updateStats(); renderDocList(); renderDocMeta();
+      toast("⚡ Открыт: " + file.name);
+      return;
+    }
+    if(ext === "json"){
+      try{
+        var j = JSON.parse(content);
+        if(j && Array.isArray(j.documents) && j.documents.length){
+          if(!confirm("Резервная копия с " + j.documents.length + " документами. Заменить?")) return;
+          docs = j.documents; activeId = docs[0].id;
+          persist(); openDoc(activeId);
+          toast("Резервная копия восстановлена");
+          return;
+        }
+      }catch(err){}
+    }
+    var html;
+    if(ext === "html" || ext === "htm"){
+      html = sanitizeHTML(content) || ("<p>" + escapeHTML(content).replace(/\n/g,"<br>") + "</p>");
+    } else if(ext === "md" || ext === "markdown"){
+      html = markdownToHTML(content);
+    } else {
+      html = content.split(/\n{2,}/).map(function(p){ return "<p>" + escapeHTML(p).replace(/\n/g,"<br>") + "</p>"; }).join("");
+    }
+    var baseName = file.name.replace(/\.[^.]+$/, "");
+    createDoc(baseName, html);
+    var d = currentDoc();
+    if(d){
+      activeFileName = file.name;
+      activeFileFormat = formatFromFilename(file.name);
+      docFiles.set(d.id, {handle:null, name:file.name, format:activeFileFormat});
+      updateFileBadge(); renderDocList();
+    }
+    toast("📂 Открыт: " + file.name);
+  };
+  r.onerror = function(){ toast("Не удалось прочитать файл"); };
+  r.readAsText(file, "utf-8");
+}
+
+/* ============ ЭКСПОРТ ============ */
+function doExport(kind){
+  if(kind === "pdf"){ doPrint(); return; }
+  var name = safeFileName();
+  var info = getContentForFormat(kind);
+  // Если есть Python-мост — сохраняем через нативный диалог
+  if(HAS_PYWEBVIEW && window.pywebview && window.pywebview.api){
+    var payload = info.content;
+    if(payload instanceof Uint8Array){
+      var bin = "";
+      var CHUNK = 0x8000;
+      for(var i = 0; i < payload.length; i += CHUNK){
+        var slice = payload.subarray(i, i + CHUNK);
+        bin += String.fromCharCode.apply(null, slice);
+      }
+      payload = "__BASE64__:" + btoa(bin);
+    }
+    window.pywebview.api.save_file(payload, name + "." + info.ext).then(function(res){
+      if(res && res.status === "ok") toast("💾 Сохранено: " + res.name);
+      else if(res && res.status === "error") toast("Ошибка: " + res.message);
+    });
+    return;
+  }
+  download(name + "." + info.ext, info.content, info.mime);
+  toast("💾 Файл скачан: " + name + "." + info.ext);
+}
+
+/* ============ FOCUS STUDIO ============ */
+var pomo = {work:25, rest:5, remaining:25*60, mode:"work", running:false, timer:null};
+function pomoRender(){
+  var m = Math.floor(pomo.remaining / 60);
+  var s = pomo.remaining % 60;
+  var el = $("#pomoTime");
+  el.textContent = String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
+  if(pomo.mode === "break") el.classList.add("break"); else el.classList.remove("break");
+  $("#pomoMode").textContent = pomo.mode === "break" ? "Перерыв ☕" : "Время работать 🎯";
+  $("#pomoStart").textContent = pomo.running ? "⏸ Пауза" : "▶ Старт";
+}
+function pomoBeep(){
+  try{
+    var ctx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    audioCtx = ctx;
+    var o = ctx.createOscillator();
+    var g = ctx.createGain();
+    o.type = "sine"; o.frequency.value = 880;
+    g.gain.value = 0.001;
+    o.connect(g); g.connect(ctx.destination);
+    var t = ctx.currentTime;
+    g.gain.exponentialRampToValueAtTime(0.25, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+    o.start(t); o.stop(t + 0.75);
+  }catch(e){}
+}
+function pomoNotify(title, body){
+  if("Notification" in window && Notification.permission === "granted"){
+    try{ new Notification(title, {body:body}); }catch(e){}
+  }
+}
+function pomoTick(){
+  if(!pomo.running) return;
+  pomo.remaining--;
+  if(pomo.remaining <= 0){
+    pomoBeep();
+    if(pomo.mode === "work"){
+      pomoNotify("Nitpad Pro", "Пора отдохнуть ☕");
+      toast("✅ Работа завершена! Перерыв.");
+      pomo.mode = "break"; pomo.remaining = pomo.rest * 60;
+    } else {
+      pomoNotify("Nitpad Pro", "Перерыв закончен!");
+      toast("⏰ Перерыв закончен.");
+      pomo.mode = "work"; pomo.remaining = pomo.work * 60;
+    }
+  }
+  pomoRender();
+}
+function pomoStart(){
+  if(pomo.running){ pomo.running = false; clearInterval(pomo.timer); pomoRender(); return; }
+  if("Notification" in window && Notification.permission === "default") Notification.requestPermission().catch(function(){});
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === "suspended") audioCtx.resume();
+  }catch(e){}
+  pomo.running = true;
+  clearInterval(pomo.timer);
+  pomo.timer = setInterval(pomoTick, 1000);
+  pomoRender();
+}
+function pomoReset(){
+  pomo.running = false;
+  clearInterval(pomo.timer);
+  pomo.mode = "work";
+  pomo.remaining = pomo.work * 60;
+  pomoRender();
+}
+
+var audioCtx = null, masterGain = null, currentSound = null, currentSoundNodes = [];
+function ensureAudio(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if(audioCtx.state === "suspended") audioCtx.resume();
+  if(!masterGain){
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = (+$("#soundVol").value) / 100;
+    masterGain.connect(audioCtx.destination);
+  }
+}
+function makeNoiseBuffer(type){
+  var len = audioCtx.sampleRate * 3;
+  var buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+  var data = buf.getChannelData(0);
+  if(type === "brown"){
+    var last = 0;
+    for(var i = 0; i < len; i++){
+      var w = Math.random() * 2 - 1;
+      last = (last + 0.02 * w) / 1.02;
+      data[i] = last * 3.5;
+    }
+  } else {
+    for(var j = 0; j < len; j++) data[j] = Math.random() * 2 - 1;
+  }
+  return buf;
+}
+function stopSound(){
+  currentSoundNodes.forEach(function(n){
+    try{ if(n.stop) n.stop(); }catch(e){}
+    try{ if(n.disconnect) n.disconnect(); }catch(e){}
+  });
+  currentSoundNodes = [];
+  currentSound = null;
+  $$("#soundGrid button").forEach(function(b){ b.classList.remove("active"); });
+}
+function playSound(kind){
+  ensureAudio();
+  stopSound();
+  if(kind === "none") return;
+  var src = audioCtx.createBufferSource();
+  var btype = (kind === "brown" || kind === "ocean" || kind === "rain") ? "brown" : "white";
+  src.buffer = makeNoiseBuffer(btype);
+  src.loop = true;
+  var gain = audioCtx.createGain();
+  gain.gain.value = 0.8;
+  var chain = [src];
+  if(kind === "rain"){
+    var hp = audioCtx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 900;
+    var lp = audioCtx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 6000;
+    src.connect(hp); hp.connect(lp); lp.connect(gain);
+    chain.push(hp, lp);
+  } else if(kind === "cafe"){
+    var bp = audioCtx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 800; bp.Q.value = 0.5;
+    src.connect(bp); bp.connect(gain); chain.push(bp);
+    var lfo = audioCtx.createOscillator(); lfo.frequency.value = 0.15;
+    var lg = audioCtx.createGain(); lg.gain.value = 0.12;
+    lfo.connect(lg); lg.connect(gain.gain); lfo.start();
+    chain.push(lfo, lg);
+  } else if(kind === "ocean"){
+    var lp2 = audioCtx.createBiquadFilter(); lp2.type = "lowpass"; lp2.frequency.value = 700;
+    src.connect(lp2); lp2.connect(gain); chain.push(lp2);
+    var lfo2 = audioCtx.createOscillator(); lfo2.frequency.value = 0.08;
+    var lg2 = audioCtx.createGain(); lg2.gain.value = 0.45;
+    lfo2.connect(lg2); lg2.connect(gain.gain); lfo2.start();
+    chain.push(lfo2, lg2);
+  } else {
+    var lp3 = audioCtx.createBiquadFilter(); lp3.type = "lowpass"; lp3.frequency.value = 1200;
+    src.connect(lp3); lp3.connect(gain); chain.push(lp3);
+  }
+  gain.connect(masterGain);
+  chain.push(gain);
+  src.start();
+  currentSoundNodes = chain;
+  currentSound = kind;
+  $$("#soundGrid button").forEach(function(b){
+    if(b.dataset.sound === kind) b.classList.add("active"); else b.classList.remove("active");
+  });
+}
+
+var ttsUtterance = null;
+function ttsPlay(){
+  if(!("speechSynthesis" in window)){ toast("Синтез речи не поддерживается"); return; }
+  window.speechSynthesis.cancel();
+  var sel = window.getSelection();
+  var text = (sel && !sel.isCollapsed && editor.contains(sel.anchorNode)) ? sel.toString() : (editor.innerText || "").trim();
+  if(!text){ toast("Нет текста"); return; }
+  var u = new SpeechSynthesisUtterance(text);
+  u.lang = "ru-RU";
+  u.rate = parseFloat($("#ttsRate").value) || 1;
+  var voices = window.speechSynthesis.getVoices();
+  var ru = voices.filter(function(v){ return /^ru/i.test(v.lang); })[0];
+  if(ru) u.voice = ru;
+  u.onend = function(){ $("#ttsPlay").classList.remove("active"); ttsUtterance = null; };
+  u.onerror = function(){ $("#ttsPlay").classList.remove("active"); ttsUtterance = null; };
+  ttsUtterance = u;
+  $("#ttsPlay").classList.add("active");
+  window.speechSynthesis.speak(u);
+}
+function ttsStop(){
+  if("speechSynthesis" in window) window.speechSynthesis.cancel();
+  $("#ttsPlay").classList.remove("active");
+  ttsUtterance = null;
+}
+
+/* ============ ПОИСК ============ */
+var matches = [], matchIndex = -1;
+function collectMatches(){
+  var query = $("#findInput").value;
+  var cs = $("#caseSensitive").checked;
+  matches = [];
+  matchIndex = -1;
+  if(!query){ updateFindCounter(); return; }
+  var needle = cs ? query : query.toLowerCase();
+  var walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null);
+  var node;
+  while((node = walker.nextNode())){
+    var hay = cs ? node.nodeValue : node.nodeValue.toLowerCase();
+    var idx = 0;
+    while((idx = hay.indexOf(needle, idx)) !== -1){
+      try{
+        var r = document.createRange();
+        r.setStart(node, idx);
+        r.setEnd(node, idx + query.length);
+        matches.push(r);
+      }catch(e){}
+      idx += needle.length;
+    }
+  }
+  updateFindCounter();
+}
+function updateFindCounter(){
+  $("#findCounter").textContent = matches.length ? (matchIndex + 1) + " / " + matches.length : "0 / 0";
+}
+function goToMatch(i){
+  if(!matches.length) return;
+  matchIndex = (i + matches.length) % matches.length;
+  var r = matches[matchIndex];
+  var sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(r);
+  var rect = r.getBoundingClientRect();
+  var wrap = $("#pageWrap");
+  var wr = wrap.getBoundingClientRect();
+  if(rect.top < wr.top + 80 || rect.bottom > wr.bottom - 80){
+    wrap.scrollTop += rect.top - wr.top - wr.height / 2;
+  }
+  updateFindCounter();
+}
+function openFind(){
+  $("#findBar").hidden = false;
+  var sel = window.getSelection();
+  if(sel && !sel.isCollapsed && editor.contains(sel.anchorNode)) $("#findInput").value = sel.toString().slice(0, 100);
+  $("#findInput").focus();
+  $("#findInput").select();
+  collectMatches();
+}
+function replaceCurrent(){
+  if(matchIndex < 0 || !matches.length) return;
+  var r = matches[matchIndex];
+  var text = $("#replaceInput").value;
+  r.deleteContents();
+  var tn = document.createTextNode(text);
+  r.insertNode(tn);
+  var nr = document.createRange();
+  nr.setStartAfter(tn);
+  nr.collapse(true);
+  var sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(nr);
+  updateStats(); scheduleSave(); collectMatches();
+  if(matches.length) goToMatch(Math.min(matchIndex, matches.length - 1));
+}
+function replaceAll(){
+  var q = $("#findInput").value;
+  if(!q) return;
+  var cs = $("#caseSensitive").checked;
+  var text = $("#replaceInput").value;
+  var needle = cs ? q : q.toLowerCase();
+  var count = 0;
+  var walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null);
+  var nodes = [];
+  var n;
+  while((n = walker.nextNode())) nodes.push(n);
+  nodes.forEach(function(node){
+    var val = node.nodeValue;
+    var hay = cs ? val : val.toLowerCase();
+    if(hay.indexOf(needle) === -1) return;
+    var result = "";
+    var i = 0;
+    while(true){
+      var idx = hay.indexOf(needle, i);
+      if(idx === -1){ result += val.slice(i); break; }
+      result += val.slice(i, idx) + text;
+      i = idx + needle.length;
+      count++;
+    }
+    node.nodeValue = result;
+  });
+  if(count){ updateStats(); scheduleSave(); collectMatches(); toast("Заменено: " + count); }
+  else toast("Совпадений не найдено");
+}
+
+/* ============ МЕНЮ ============ */
+var openMenuEl = null;
+function closeAllMenus(){
+  if(openMenuEl){ openMenuEl.remove(); openMenuEl = null; }
+}
+document.addEventListener("click", closeAllMenus);
+
+function buildThemeMenu(){
+  var menu = document.createElement("div");
+  menu.className = "menu";
+  var html = '<div class="menu-label">Тема оформления</div>';
+  THEMES.forEach(function(t){
+    html += '<button data-theme="' + t.id + '"' + (t.id === currentTheme ? ' class="active"' : "") + ">" +
+      '<span class="swatch" style="background:' + t.bg + ";border-color:" + t.accent + '"></span>' +
+      "<span>" + t.name + "</span></button>";
+  });
+  menu.innerHTML = html;
+  return menu;
+}
+function buildExportMenu(){
+  var menu = document.createElement("div");
+  menu.className = "menu";
+  menu.innerHTML =
+    '<div class="menu-label">Файл на диске</div>' +
+    '<button data-act="saveas">💾 Сохранить как… (Ctrl+Shift+S)</button>' +
+    "<hr>" +
+    '<div class="menu-label">Экспорт в форматах</div>' +
+    '<button data-act="docx">📘 Word (.docx) — настоящий</button>' +
+    '<button data-act="pdf">📕 PDF (.pdf) — через печать</button>' +
+    '<button data-act="nppro">⚡ Nitpad Pro (.nppro) — родной</button>' +
+    '<button data-act="html">🌐 HTML (.html)</button>' +
+    '<button data-act="md">📝 Markdown (.md)</button>' +
+    '<button data-act="txt">📄 Текст (.txt)</button>' +
+    "<hr>" +
+    '<button data-act="json">📦 Резервная копия (.json)</button>';
+  return menu;
+}
+
+/* ============ ЗУМ ============ */
+function applyZoom(){
+  editor.style.fontSize = (16 * zoom / 100).toFixed(2) + "px";
+  $("#zoomLabel").textContent = zoom + "%";
+}
+
+/* ============ ИНИЦИАЛИЗАЦИЯ ============ */
+function init(){
+  // Перепроверяем флаг — вдруг pywebview появился после DOMContentLoaded
+  if(typeof window.pywebview !== 'undefined' && window.pywebview.api){
+    HAS_PYWEBVIEW = true;
+  }
+  console.log('[Nitpad Pro] Режим:', HAS_PYWEBVIEW ? 'Desktop (pywebview)' : (HAS_FS ? 'Браузер (File System API)' : 'Браузер (download)'));
+
+  var saved = "light";
+  try{ saved = localStorage.getItem("nitpad.theme") || "light"; }catch(e){}
+  setTheme(saved);
+
+  loadState();
+  openDoc(activeId);
+  updateStorageInfo();
+  renderDocList();
+  initFontSizes();
+  applyZoom();
+
+  $("#sidebarToggle").addEventListener("click", function(){ app.classList.toggle("no-sidebar"); });
+  $("#focusBtn").addEventListener("click", function(){
+    app.classList.toggle("focus");
+    toast(app.classList.contains("focus") ? "Режим фокусировки (Esc — выход)" : "Обычный режим");
+  });
+
+  $$("[data-cmd]").forEach(function(btn){
+    btn.addEventListener("mousedown", function(e){ e.preventDefault(); });
+    btn.addEventListener("click", function(){ exec(btn.dataset.cmd); });
+  });
+
+  $("#blockSelect").addEventListener("change", function(e){
+    exec("formatBlock", "<" + e.target.value + ">");
+    e.target.selectedIndex = 0;
+  });
+  $("#fontFamily").addEventListener("change", function(e){
+    if(e.target.value) exec("fontName", e.target.value);
+    e.target.selectedIndex = 0;
+  });
+  $("#fontSize").addEventListener("change", function(e){
+    if(e.target.value) setFontSize(e.target.value);
+    e.target.selectedIndex = 0;
+  });
+  $("#foreColor").addEventListener("input", function(e){ exec("foreColor", e.target.value); });
+  $("#hiliteColor").addEventListener("input", function(e){ exec("hiliteColor", e.target.value); });
+  $("#clearFormat").addEventListener("click", function(){
+    exec("removeFormat");
+    exec("formatBlock", "<p>");
+    toast("Форматирование очищено");
+  });
+  $("#addLink").addEventListener("click", addLink);
+
+  // Изображение: через Python-мост или обычный input
+  $("#addImage").addEventListener("click", function(){
+    if(HAS_PYWEBVIEW && window.pywebview && window.pywebview.api && window.pywebview.api.pick_image){
+      window.pywebview.api.pick_image().then(function(res){
+        if(res && res.status === "ok"){
+          insertHTML('<img src="' + res.dataUrl + '" alt="' + escapeHTML(res.name) + '">');
+          toast("Изображение вставлено");
+        } else if(res && res.status === "error"){
+          toast("Ошибка: " + res.message);
+        }
+      });
+      return;
+    }
+    $("#imageInput").click();
+  });
+  $("#imageInput").addEventListener("change", function(e){
+    if(e.target.files[0]) insertImageFromFile(e.target.files[0]);
+    e.target.value = "";
+  });
+  $("#addTable").addEventListener("click", insertTable);
+
+  $("#openFileBtn").addEventListener("click", openFileFromDisk);
+  $("#saveFileBtn").addEventListener("click", function(){ saveToFile(false); });
+  $("#fileInput").addEventListener("change", function(e){
+    if(e.target.files[0]) importFile(e.target.files[0]);
+    e.target.value = "";
+  });
+  $("#printBtn").addEventListener("click", doPrint);
+
+  $("#exportBtn").addEventListener("click", function(e){
+    e.stopPropagation();
+    if(openMenuEl){ closeAllMenus(); return; }
+    var menu = buildExportMenu();
+    var rect = e.currentTarget.getBoundingClientRect();
+    menu.style.top = (rect.bottom + 6) + "px";
+    menu.style.left = Math.max(8, rect.right - 300) + "px";
+    document.body.appendChild(menu);
+    openMenuEl = menu;
+    menu.querySelectorAll("[data-act]").forEach(function(b){
+      b.addEventListener("click", function(ev){
+        ev.stopPropagation();
+        var act = b.dataset.act;
+        if(act === "saveas") saveToFile(true);
+        else doExport(act);
+        closeAllMenus();
+      });
+    });
+  });
+
+  $("#themeBtn").addEventListener("click", function(e){
+    e.stopPropagation();
+    if(openMenuEl){ closeAllMenus(); return; }
+    var menu = buildThemeMenu();
+    var rect = e.currentTarget.getBoundingClientRect();
+    menu.style.top = (rect.bottom + 6) + "px";
+    menu.style.left = Math.max(8, rect.right - 260) + "px";
+    document.body.appendChild(menu);
+    openMenuEl = menu;
+    menu.querySelectorAll("[data-theme]").forEach(function(b){
+      b.addEventListener("click", function(ev){
+        ev.stopPropagation();
+        setTheme(b.dataset.theme);
+        closeAllMenus();
+        toast("Тема: " + b.textContent.trim());
+      });
+    });
+  });
+
+  $("#findBtn").addEventListener("click", openFind);
+  $("#findClose").addEventListener("click", function(){ $("#findBar").hidden = true; editor.focus(); });
+  $("#findInput").addEventListener("input", collectMatches);
+  $("#caseSensitive").addEventListener("change", collectMatches);
+  $("#findNext").addEventListener("click", function(){ goToMatch(matchIndex + 1); });
+  $("#findPrev").addEventListener("click", function(){ goToMatch(matchIndex - 1); });
+  $("#replaceOne").addEventListener("click", replaceCurrent);
+  $("#replaceAll").addEventListener("click", replaceAll);
+  $("#findInput").addEventListener("keydown", function(e){
+    if(e.key === "Enter"){ e.preventDefault(); goToMatch(matchIndex + (e.shiftKey ? -1 : 1)); }
+    if(e.key === "Escape"){ $("#findBar").hidden = true; editor.focus(); }
+  });
+
+  $("#newDocBtn").addEventListener("click", function(){ createDoc(); });
+  $("#docSearch").addEventListener("input", renderDocList);
+  $("#docList").addEventListener("click", function(e){
+    var del = e.target.closest("[data-del]");
+    if(del){ e.stopPropagation(); deleteDoc(del.dataset.del); return; }
+    var item = e.target.closest(".doc-item");
+    if(item && item.dataset.id !== activeId) openDoc(item.dataset.id);
+  });
+
+  editor.addEventListener("input", function(){ updateStats(); scheduleSave(); });
+  editor.addEventListener("paste", function(e){
+    var html = e.clipboardData.getData("text/html");
+    if(html){ e.preventDefault(); insertHTML(sanitizeHTML(html)); }
+  });
+  editor.addEventListener("keyup", rememberSelection);
+  editor.addEventListener("mouseup", rememberSelection);
+  editor.addEventListener("blur", rememberSelection);
+  editor.addEventListener("keydown", function(e){
+    if(e.key === "Tab"){
+      e.preventDefault();
+      document.execCommand(e.shiftKey ? "outdent" : "indent");
+      scheduleSave();
+    }
+  });
+  titleInput.addEventListener("input", scheduleSave);
+  titleInput.addEventListener("blur", saveNow);
+
+  $("#zoomIn").addEventListener("click", function(){ zoom = Math.min(200, zoom + 10); applyZoom(); });
+  $("#zoomOut").addEventListener("click", function(){ zoom = Math.max(60, zoom - 10); applyZoom(); });
+
+  $("#focusStudioBtn").addEventListener("click", function(){
+    var fs = $("#focusStudio");
+    fs.hidden = !fs.hidden;
+    if(!fs.hidden) pomoRender();
+  });
+  $("#fsClose").addEventListener("click", function(){ $("#focusStudio").hidden = true; });
+  $("#pomoStart").addEventListener("click", pomoStart);
+  $("#pomoReset").addEventListener("click", pomoReset);
+  $$(".pomo-presets button").forEach(function(b){
+    b.addEventListener("click", function(){
+      pomo.work = +b.dataset.work;
+      pomo.rest = +b.dataset.break;
+      $$(".pomo-presets button").forEach(function(x){ x.classList.remove("active"); });
+      b.classList.add("active");
+      pomoReset();
+      toast("Помодоро: " + pomo.work + " / " + pomo.rest);
+    });
+  });
+  pomoRender();
+
+  $("#soundGrid").addEventListener("click", function(e){
+    var btn = e.target.closest("[data-sound]");
+    if(!btn) return;
+    var kind = btn.dataset.sound;
+    if(currentSound === kind){ stopSound(); return; }
+    playSound(kind);
+  });
+  $("#soundVol").addEventListener("input", function(e){
+    var v = +e.target.value;
+    $("#soundVolVal").textContent = v + "%";
+    if(masterGain) masterGain.gain.value = v / 100;
+  });
+  $("#ttsPlay").addEventListener("click", ttsPlay);
+  $("#ttsStop").addEventListener("click", ttsStop);
+  $("#ttsRate").addEventListener("input", function(e){
+    $("#ttsRateVal").textContent = parseFloat(e.target.value).toFixed(1) + "×";
+  });
+  if("speechSynthesis" in window){
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = function(){ window.speechSynthesis.getVoices(); };
+  }
+
+  document.addEventListener("keydown", function(e){
+    var ctrl = e.ctrlKey || e.metaKey;
+    if(e.key === "Escape"){
+      if(app.classList.contains("focus")) app.classList.remove("focus");
+      if(!$("#findBar").hidden) $("#findBar").hidden = true;
+      if(!$("#focusStudio").hidden) $("#focusStudio").hidden = true;
+      closeAllMenus();
+      return;
+    }
+    if(ctrl && e.shiftKey && e.key.toLowerCase() === "s"){ e.preventDefault(); saveToFile(true); return; }
+    if(ctrl && e.key.toLowerCase() === "s"){ e.preventDefault(); saveToFile(false); return; }
+    if(ctrl && e.key.toLowerCase() === "o"){ e.preventDefault(); openFileFromDisk(); return; }
+    if(ctrl && e.key.toLowerCase() === "f"){ e.preventDefault(); openFind(); return; }
+    if(ctrl && e.key.toLowerCase() === "p"){ e.preventDefault(); doPrint(); return; }
+    if(ctrl && e.shiftKey && e.key.toLowerCase() === "n"){ e.preventDefault(); createDoc(); return; }
+    if(ctrl && e.key.toLowerCase() === "b"){ e.preventDefault(); exec("bold"); }
+    if(ctrl && e.key.toLowerCase() === "i"){ e.preventDefault(); exec("italic"); }
+    if(ctrl && e.key.toLowerCase() === "u"){ e.preventDefault(); exec("underline"); }
+  });
+
+  window.addEventListener("beforeunload", saveNow);
+
+  editor.focus();
+  updateStats();
+  updateFileBadge();
+}
+
+document.addEventListener("DOMContentLoaded", init);
+})();
+</script>
+</body>
+</html>
